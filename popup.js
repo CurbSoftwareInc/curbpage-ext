@@ -79,7 +79,6 @@ function createUrlForm(accordion) {
     return form;
 }
 
-
 function addUrlToAccordion(accordion, url) {
     const table = accordion.querySelector('table');
     const row = document.createElement('tr');
@@ -98,12 +97,8 @@ function addUrlToAccordion(accordion, url) {
     const editCell = document.createElement('td');
     const editButton = document.createElement('button');
     editButton.innerText = 'Edit';
-    editButton.addEventListener('click', () => {
-        const newUrl = prompt('Edit URL', url).trim();
-        if (newUrl) {
-            urlCell.innerText = newUrl;
-            saveAccordions();
-        }
+    editButton.addEventListener('click', function() {
+        editUrlInAccordion(this, urlCell);
     });
     editCell.appendChild(editButton);
     row.appendChild(editCell);
@@ -123,42 +118,40 @@ function addUrlToAccordion(accordion, url) {
     table.appendChild(row);
 }
 
-function navigateToUrl(relativeUrl) {
+function navigateToUrl(url) {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         if (!tabs[0] || !tabs[0].url) return;
-
         const currentTabUrl = new URL(tabs[0].url);
-        const fullPath = relativeUrl.startsWith('/') ? relativeUrl : '/' + relativeUrl;
+        const fullPath = url.startsWith('/') ? url : '/' + url;
         const fullUrl = currentTabUrl.origin + fullPath;
         chrome.tabs.update(tabs[0].id, { url: fullUrl });
     });
 }
 
-
-// Ensure this function is called after adding a new URL to an accordion
-function addEventListenersToButtons() {
-    document.querySelectorAll('.accordion .go-button').forEach(button => {
-        button.removeEventListener('click', onGoButtonClick); // Remove existing listener to avoid duplicates
-        button.addEventListener('click', onGoButtonClick);
-    });
-}
-
-function onGoButtonClick(event) {
-    const url = event.target.getAttribute('data-url');
-    if (url) {
-        navigateToUrl(url);
+function editUrlInAccordion(editButton, urlCell) {
+    if (editButton.innerText === 'Edit') {
+        // Turn the URL cell into a text input field
+        const currentUrl = urlCell.innerText;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentUrl;
+        urlCell.innerText = '';
+        urlCell.appendChild(input);
+        editButton.innerText = 'Save';
+    } else {
+        // Save the edited URL
+        const newUrl = urlCell.querySelector('input').value.trim();
+        urlCell.innerText = newUrl;
+        editButton.innerText = 'Edit';
+        saveAccordions();
     }
 }
-
-// Call addEventListenersToButtons() after adding new URLs or creating new accordions
-
 
 function saveAccordions() {
     const accordions = [];
     document.querySelectorAll('.accordion').forEach(accordion => {
         const title = accordion.querySelector('.accordion-header').innerText;
-        const urls = Array.from(accordion.querySelectorAll('td:nth-child(2)'))
-                          .map(td => td.innerText);
+        const urls = Array.from(accordion.querySelectorAll('td:nth-child(2)')).map(td => td.innerText);
         accordions.push({ title, urls });
     });
     chrome.storage.sync.set({ 'accordions': accordions });
