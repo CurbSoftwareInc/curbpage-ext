@@ -3,7 +3,11 @@
   "name": "Curb Page",
   "version": "1.0",
   "description": "Navigate to specific parts of the current domain. It's like making a custom navigation menu for yourself on any website",
-  "permissions": ["storage", "activeTab", "tabs"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -27,7 +31,9 @@
         "icons/icon48.png",
         "icons/icon128.png"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }

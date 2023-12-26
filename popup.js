@@ -1,13 +1,13 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     loadAccordions();
-    document.getElementById('addAccordionForm').addEventListener('submit', function(event) {
+    document.getElementById('addAccordionForm').addEventListener('submit', function (event) {
         event.preventDefault();
         submitForm();
     });
 });
 
 function loadAccordions() {
-    chrome.storage.sync.get(['accordions'], function(result) {
+    chrome.storage.sync.get(['accordions'], function (result) {
         document.getElementById('accordionContainer').innerHTML = '';
         if (result.accordions) {
             result.accordions.forEach(accordionData => {
@@ -85,7 +85,7 @@ function editAccordionTitle(header, editButton) {
             titleInput.value = titleSpan.textContent;
             titleInput.classList.add('accordion-title-input');
             header.replaceChild(titleInput, titleSpan);
-            titleInput.addEventListener('keydown', function(event) {
+            titleInput.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter') {
                     updateTitle(header, titleInput, editButton);
                 }
@@ -157,10 +157,10 @@ function createUrlRow(url) {
     const row = document.createElement('tr');
     row.appendChild(createTableCellWithButton('Go', () => navigateToUrl(url)));
     row.appendChild(createTableCell(url));
-    row.appendChild(createTableCellWithButton('Edit', function() {
+    row.appendChild(createTableCellWithButton('Edit', function () {
         editUrlInRow(this, row);
     }));
-    row.appendChild(createTableCellWithButton('Delete', function() {
+    row.appendChild(createTableCellWithButton('Delete', function () {
         deleteUrlRow(this, row);
     }));
     return row;
@@ -214,7 +214,7 @@ function updateNavigateButton(navigateButton, newUrl) {
 }
 
 function navigateToUrl(url) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         if (!tabs[0] || !tabs[0].url) return;
         const currentTabUrl = new URL(tabs[0].url);
         const fullPath = url.startsWith('/') ? url : '/' + url;
@@ -228,7 +228,7 @@ function saveAccordions() {
     document.querySelectorAll('.accordion').forEach(accordion => {
         const title = accordion.querySelector('.accordion-header span').textContent.trim();
         const urls = Array.from(accordion.querySelectorAll('td:nth-child(2)'))
-                          .map(td => td.textContent);
+            .map(td => td.textContent);
         accordions.push({ title, urls });
     });
     chrome.storage.sync.set({ 'accordions': accordions });
@@ -249,13 +249,15 @@ function submitForm() {
     var inputValue = input.value.trim();
 
     if (inputValue !== "") {
-        addAccordion(inputValue); // Function to add the accordion
+        addAccordion(inputValue);
         input.value = "";
+        saveAccordions();  // Save the state after adding a new accordion
         updateAriaLiveRegion("URL group added: " + inputValue);
     } else {
         updateAriaLiveRegion("No URL group title entered.");
     }
 }
+
 
 function updateAriaLiveRegion(message) {
     var ariaLiveRegion = document.getElementById("ariaLiveRegion");
