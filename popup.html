@@ -8,18 +8,20 @@
     <div id="extension">
         <!-- Extension Header -->
         <div class="extension-container">
-            <h1 class="extension-title" href="https://curbpage.com" target="_blank">
+            <h1 class="extension-title" href="https://curbpage.com" target="_blank" aria-label="CurbPage Navigator Relative URL Extension">
                 <img src="icons/icon48.png" alt="Extension Icon">&ensp; CurbPage Navigator
             </h1>
         </div>
-        <!-- Add Accordion Form -->
-        <div id="addAccordionDiv">
-            <form id="addAccordionForm">
-                <input type="text" id="accordionTitleInput" class="button addAccordionFormdiv1" placeholder="Enter URL Group Title">
-                <button type="submit" class="button addAccordionFormdiv2">Add New URL Group</button>
-            </form>
-        </div>
-        <!-- Accordions Container -->
+<!-- Add Accordion Form -->
+<div id="addAccordionDiv">
+    <form id="addAccordionForm">
+        <input type="text" id="accordionTitleInput" class="button addAccordionFormdiv1" placeholder="Enter URL Group Title" aria-label="Enter URL Group Title">
+        <button type="submit" class="button addAccordionFormdiv2">Add New URL Group</button>
+    </form>
+    <div aria-live="assertive" role="status" id="ariaLiveRegion" style="display: none;"></div>
+</div>
+
+       <!-- Accordions Container -->
         <div id="accordionContainer">
             <!-- Accordions will be added here -->
         </div>

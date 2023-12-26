@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadAccordions();
-    document.getElementById('addAccordionForm').addEventListener('submit', handleAddAccordion);
+    document.getElementById('addAccordionForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        submitForm();
+    });
 });
 
 function loadAccordions() {
@@ -36,6 +39,7 @@ function createAccordion(title) {
     accordion.classList.add('accordion');
     const header = document.createElement('div');
     header.classList.add('accordion-header');
+    header.setAttribute('tabindex', '0');
     const titleSpan = document.createElement('span');
     titleSpan.textContent = title;
     header.appendChild(titleSpan);
@@ -79,37 +83,33 @@ function editAccordionTitle(header, editButton) {
             titleInput = document.createElement('input');
             titleInput.type = 'text';
             titleInput.value = titleSpan.textContent;
+            titleInput.classList.add('accordion-title-input');
             header.replaceChild(titleInput, titleSpan);
+            titleInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    updateTitle(header, titleInput, editButton);
+                }
+            });
+            titleInput.focus();
             editButton.textContent = 'Save';
         }
     } else {
         if (titleInput) {
-            const newTitle = titleInput.value.trim();
-            titleSpan = document.createElement('span');
-            titleSpan.textContent = newTitle;
-            header.replaceChild(titleSpan, titleInput);
-            editButton.textContent = 'Edit';
-            // Save the updated title
-            saveAccordions();
+            updateTitle(header, titleInput, editButton);
         }
     }
 }
 
-
 function updateTitle(header, titleInput, editButton) {
-    // Update the title and switch the button text back to 'Edit'
     if (titleInput) {
         const newTitle = titleInput.value.trim();
         const newTitleSpan = document.createElement('span');
         newTitleSpan.textContent = newTitle;
-        newTitleSpan.classList.add('accordion-title');
         header.replaceChild(newTitleSpan, titleInput);
         editButton.textContent = 'Edit';
         saveAccordions();
     }
 }
-
-
 
 function deleteAccordion(accordion) {
     if (confirm('Are you sure you want to delete this accordion?')) {
@@ -238,4 +238,30 @@ function escapeHTML(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+document.addEventListener('DOMContentLoaded', function () {
+    var addButton = document.querySelector('.addAccordionFormdiv2');
+    addButton.addEventListener('click', submitForm);
+});
+
+function submitForm() {
+    var input = document.getElementById("accordionTitleInput");
+    var inputValue = input.value.trim();
+
+    if (inputValue !== "") {
+        addAccordion(inputValue); // Function to add the accordion
+        input.value = "";
+        updateAriaLiveRegion("URL group added: " + inputValue);
+    } else {
+        updateAriaLiveRegion("No URL group title entered.");
+    }
+}
+
+function updateAriaLiveRegion(message) {
+    var ariaLiveRegion = document.getElementById("ariaLiveRegion");
+    ariaLiveRegion.textContent = message;
+    ariaLiveRegion.style.display = "block";
+    setTimeout(() => {
+        ariaLiveRegion.style.display = "none";
+    }, 0);
 }
