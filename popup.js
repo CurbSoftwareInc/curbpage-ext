@@ -123,7 +123,7 @@ function createUrlForm(accordion) {
     form.classList.add('url-form');
     const input = document.createElement('input');
     input.type = 'text';
-    input.placeholder = 'Enter a URL (with or without leading /)';
+    input.placeholder = 'Enter a relative URL (with or without leading / )';
     form.appendChild(input);
     const submitButton = document.createElement('button');
     submitButton.type = 'submit';
