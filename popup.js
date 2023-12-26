@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function loadAccordions() {
     chrome.storage.sync.get(['accordions'], function(result) {
+        // Clear existing accordions
+        document.getElementById('accordionContainer').innerHTML = '';
+
         if (result.accordions) {
             result.accordions.forEach(accordionData => {
                 addAccordion(accordionData.title, accordionData.urls);
@@ -25,31 +28,122 @@ function handleAddAccordion(event) {
 
 function addAccordion(title, urls = []) {
     const accordionContainer = document.getElementById('accordionContainer');
-    const accordion = createAccordion(title);
-    accordionContainer.prepend(accordion);
 
+    // Generate a unique ID for the accordion based on the title
+    const accordionId = `accordion-${title.replace(/\s+/g, '-').toLowerCase()}`;
+
+    // Check if the accordion already exists
+    let accordion = document.getElementById(accordionId);
+    if (!accordion) {
+        accordion = createAccordion(title, accordionId);
+        accordionContainer.prepend(accordion);
+    }
+
+    // Add URLs to accordion
     urls.forEach(url => addUrlToAccordion(accordion, url));
-    const urlForm = createUrlForm(accordion);
-    accordion.querySelector('.accordion-body').prepend(urlForm);
 }
 
-function createAccordion(title) {
+function createAccordion(title, accordionId) {
     const accordion = document.createElement('div');
     accordion.classList.add('accordion');
+    accordion.id = accordionId; // Set the unique ID
 
+    // Create the header container
     const header = document.createElement('div');
     header.classList.add('accordion-header');
-    header.innerText = title;
-    header.addEventListener('click', () => accordion.querySelector('.accordion-body').classList.toggle('active'));
 
+    // Span for the title
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = title;
+    titleSpan.classList.add('accordion-title');
+    header.appendChild(titleSpan);
+
+    // Edit button
+    const editButton = document.createElement('button');
+    editButton.textContent = 'Edit';
+    editButton.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevents accordion toggle
+        editAccordionTitle(header, this);
+    });
+    header.appendChild(editButton);
+
+    // Delete button
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevents accordion toggle
+        deleteAccordion(accordion);
+    });
+    header.appendChild(deleteButton);
+
+    // Click event to toggle accordion body
+    header.addEventListener('click', function() {
+        accordion.querySelector('.accordion-body').classList.toggle('active');
+    });
+
+    // Create the accordion body
     const body = document.createElement('div');
     body.classList.add('accordion-body');
-    const table = document.createElement('table');
-    body.appendChild(table);
 
+    // Append header and body to the accordion
     accordion.appendChild(header);
     accordion.appendChild(body);
+
+    // Add URL form only once
+    const urlForm = createUrlForm(accordion);
+    body.appendChild(urlForm);
+
     return accordion;
+}
+
+
+function editAccordionTitle(header, editButton) {
+    let titleSpan = header.querySelector('.accordion-title');
+    let titleInput = header.querySelector('.accordion-title-input');
+
+    if (editButton.textContent === 'Edit') {
+        if (!titleInput) {
+            titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.classList.add('accordion-title-input');
+            titleInput.value = titleSpan.textContent.trim();
+            header.replaceChild(titleInput, titleSpan);
+
+            // Handle 'Enter' key press
+            titleInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    updateTitle(header, titleInput, editButton);
+                }
+            });
+
+            titleInput.focus();
+        }
+        editButton.textContent = 'Save';
+    } else {
+        updateTitle(header, titleInput, editButton);
+    }
+}
+
+function updateTitle(header, titleInput, editButton) {
+    if (titleInput) {
+        const newTitle = titleInput.value.trim();
+        const newTitleSpan = document.createElement('span');
+        newTitleSpan.textContent = newTitle;
+        newTitleSpan.classList.add('accordion-title');
+        header.replaceChild(newTitleSpan, titleInput);
+        editButton.textContent = 'Edit';
+        saveAccordions();
+    }
+}
+
+
+function deleteAccordion(accordion) {
+    // Confirm before deleting
+    if (confirm('Are you sure you want to delete this accordion?')) {
+        accordion.remove();
+        // Save the updated accordions to storage
+        saveAccordions();
+    }
 }
 
 function createUrlForm(accordion) {
@@ -72,15 +166,20 @@ function createUrlForm(accordion) {
         if (url) {
             addUrlToAccordion(accordion, url);
             input.value = '';
-            saveAccordions();
         }
     });
 
     return form;
 }
 
+
 function addUrlToAccordion(accordion, url) {
-    const table = accordion.querySelector('table');
+    let table = accordion.querySelector('table');
+    if (!table) {
+        table = document.createElement('table');
+        accordion.querySelector('.accordion-body').appendChild(table);
+    }
+
     const row = document.createElement('tr');
 
     const navigateCell = document.createElement('td');
@@ -98,7 +197,7 @@ function addUrlToAccordion(accordion, url) {
     const editButton = document.createElement('button');
     editButton.innerText = 'Edit';
     editButton.addEventListener('click', function() {
-        editUrlInAccordion(this, urlCell);
+        editUrlInAccordion(this, urlCell, navigateButton);
     });
     editCell.appendChild(editButton);
     row.appendChild(editCell);
@@ -106,16 +205,57 @@ function addUrlToAccordion(accordion, url) {
     const deleteCell = document.createElement('td');
     const deleteButton = document.createElement('button');
     deleteButton.innerText = 'Delete';
-    deleteButton.addEventListener('click', () => {
+    deleteButton.addEventListener('click', function() {
         if (confirm('Are you sure you want to delete this URL?')) {
             row.remove();
-            saveAccordions();
+            saveAccordions(); // Save the accordions after deleting a URL
         }
     });
     deleteCell.appendChild(deleteButton);
     row.appendChild(deleteCell);
 
     table.appendChild(row);
+    saveAccordions(); // Save the accordions after adding a new URL
+}
+
+
+
+function editUrlInAccordion(editButton, urlCell) {
+    const navigateButton = urlCell.parentNode.querySelector('button'); // Adjust the selector as needed
+    if (editButton.innerText === 'Edit') {
+        const currentUrl = urlCell.innerText;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentUrl;
+        urlCell.innerHTML = '';
+        urlCell.appendChild(input);
+        editButton.innerText = 'Save';
+    } else {
+        const newUrl = urlCell.querySelector('input').value.trim();
+        if (newUrl) {
+            urlCell.innerText = newUrl;
+            editButton.innerText = 'Edit';
+            updateNavigateButton(navigateButton, newUrl);
+            saveAccordions();
+        }
+    }
+}
+
+function updateNavigateButton(navigateButton, newUrl) {
+    navigateButton.removeEventListener('click', navigateButton.clickListener);
+    navigateButton.clickListener = () => navigateToUrl(newUrl);
+    navigateButton.addEventListener('click', navigateButton.clickListener);
+}
+function saveAccordions() {
+    const accordions = [];
+    document.querySelectorAll('.accordion').forEach(accordion => {
+        const title = accordion.querySelector('.accordion-header .accordion-title').textContent.trim();
+        const urls = Array.from(accordion.querySelectorAll('td:nth-child(2)')).map(td => td.textContent);
+        accordions.push({ title, urls });
+    });
+    chrome.storage.sync.set({ 'accordions': accordions }, () => {
+        console.log('Accordions saved');
+    });
 }
 
 function navigateToUrl(url) {
@@ -128,31 +268,3 @@ function navigateToUrl(url) {
     });
 }
 
-function editUrlInAccordion(editButton, urlCell) {
-    if (editButton.innerText === 'Edit') {
-        // Turn the URL cell into a text input field
-        const currentUrl = urlCell.innerText;
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = currentUrl;
-        urlCell.innerText = '';
-        urlCell.appendChild(input);
-        editButton.innerText = 'Save';
-    } else {
-        // Save the edited URL
-        const newUrl = urlCell.querySelector('input').value.trim();
-        urlCell.innerText = newUrl;
-        editButton.innerText = 'Edit';
-        saveAccordions();
-    }
-}
-
-function saveAccordions() {
-    const accordions = [];
-    document.querySelectorAll('.accordion').forEach(accordion => {
-        const title = accordion.querySelector('.accordion-header').innerText;
-        const urls = Array.from(accordion.querySelectorAll('td:nth-child(2)')).map(td => td.innerText);
-        accordions.push({ title, urls });
-    });
-    chrome.storage.sync.set({ 'accordions': accordions });
-}
