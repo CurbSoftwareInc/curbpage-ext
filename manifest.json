@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Curb Page",
-  "version": "1.0",
+  "version": "1.01",
   "description": "Navigate to specific parts of the current domain. It's like making a custom navigation menu for yourself on any website",
   "permissions": [
     "storage",
